@@ -147,6 +147,16 @@ class TestBasicWalkDir(unittest.TestCase):
 
     def test_recurse_dir(self):
         recurse_dir(root_dir=self.pwd)
-        self.fail('Work in progress')
+        self.assertEqual(3, len(data['all_original_dirs_only']))
+        self.assertEqual(7, len(data['all_original_files']))
+        for directory in data['all_original_dirs_only']:
+            self.assertTrue(os.path.exists(directory), 'directory={}'.format(directory))
+            self.assertTrue(os.path.isdir(directory), 'directory={}'.format(directory))
+        for item in data['all_original_files']:
+            self.assertTrue(os.path.exists(item))
+            if '.txt' in item:
+                self.assertTrue(os.path.isfile(item), 'item={}'.format(item))
+            else:
+                self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
 
 # EOF
