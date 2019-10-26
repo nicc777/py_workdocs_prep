@@ -67,3 +67,19 @@ In terms of processing, the following order of processing will be followed:
    2. Loop through the list and commit rename commands
 3. Now, assuming we have a list of final directory and file names, determine which items are over the total length limit and print warnings for these
 
+## Acknowledgements
+
+Thanks to [NanoDano](https://www.devdungeon.com/users/nanodano) for the [examples](https://www.devdungeon.com/content/walk-directory-python) I used to walk through the directories.
+
+## Geek Food
+
+### Manual Testing
+
+To inspect the project and prepare for migrating to AWS Workdocs...
+
+Clone the project and `cd` into the project directory
+
+```python
+>>> from py_workdocs_prep.py_workdocs_prep import start
+>>> start()
+```

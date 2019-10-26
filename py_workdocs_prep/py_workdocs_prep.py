@@ -6,8 +6,11 @@ directories_to_delete_if_found = [
     'node_modules'
 ]
 
-# Print every file with its size recursing through dirs
+
 def recurse_dir(root_dir):
+    '''
+    Note: Initial pattern from https://www.devdungeon.com/content/walk-directory-python was adopted in the final product.
+    '''
     root_dir = os.path.abspath(root_dir)
     for item in os.listdir(root_dir):
         item_full_path = os.path.join(root_dir, item)
@@ -17,6 +20,12 @@ def recurse_dir(root_dir):
         else:
             print("%s - %s bytes" % (item_full_path, os.stat(item_full_path).st_size))
 
+
+def start(start=os.getcwd()):
+    print('Starting in "{}"'.format(start))
+    recurse_dir(root_dir=start)
+
 if __name__ == "__main__":
-    #recurse_dir("")
-    print('Starting')
+    start(start=os.getcwd())
+
+# EOF
