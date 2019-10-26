@@ -83,3 +83,28 @@ Clone the project and `cd` into the project directory
 >>> from py_workdocs_prep.py_workdocs_prep import start
 >>> start()
 ```
+### Memory Profiling
+
+You can try the following:
+
+```bash
+> pip install -U memory_profiler
+```
+
+Then:
+
+```python
+>>> from py_workdocs_prep.py_workdocs_prep import start
+>>> from memory_profiler import memory_usage
+>>> memory_usage((start, ('D:\\Dropbox',))) 
+Starting in "D:\Dropbox"
+[15.54296875, 15.54296875, 15.54296875,..., 178.421875]
+```
+
+This means the script started scanning the directory `D:\Dropbox` and the application grew from a starting 15.5 MiB to 178.4 MiB (early testing).
+
+My machine has plenty of RAM, so this was acceptable for me.
+
+References:
+
+* [memory_profiler](https://pypi.org/project/memory-profiler/)
