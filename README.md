@@ -67,3 +67,44 @@ In terms of processing, the following order of processing will be followed:
    2. Loop through the list and commit rename commands
 3. Now, assuming we have a list of final directory and file names, determine which items are over the total length limit and print warnings for these
 
+## Acknowledgements
+
+Thanks to [NanoDano](https://www.devdungeon.com/users/nanodano) for the [examples](https://www.devdungeon.com/content/walk-directory-python) I used to walk through the directories.
+
+## Geek Food
+
+### Manual Testing
+
+To inspect the project and prepare for migrating to AWS Workdocs...
+
+Clone the project and `cd` into the project directory
+
+```python
+>>> from py_workdocs_prep.py_workdocs_prep import start
+>>> start()
+```
+### Memory Profiling
+
+You can try the following:
+
+```bash
+> pip install -U memory_profiler
+```
+
+Then:
+
+```python
+>>> from py_workdocs_prep.py_workdocs_prep import start
+>>> from memory_profiler import memory_usage
+>>> memory_usage((start, ('D:\\Dropbox',))) 
+Starting in "D:\Dropbox"
+[15.54296875, 15.54296875, 15.54296875,..., 178.421875]
+```
+
+This means the script started scanning the directory `D:\Dropbox` and the application grew from a starting 15.5 MiB to 178.4 MiB (early testing).
+
+My machine has plenty of RAM, so this was acceptable for me.
+
+References:
+
+* [memory_profiler](https://pypi.org/project/memory-profiler/)
