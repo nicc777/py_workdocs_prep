@@ -6,6 +6,10 @@ directories_to_delete_if_found = [
     'node_modules'
 ]
 
+data = dict()
+data['all_original_files'] = list()
+data['all_original_dirs_only'] = list()
+data['processing'] = dict()
 
 def recurse_dir(root_dir):
     '''
@@ -16,14 +20,17 @@ def recurse_dir(root_dir):
         item_full_path = os.path.join(root_dir, item)
 
         if os.path.isdir(item_full_path):
+            data['all_original_dirs_only'].append(item_full_path)
             recurse_dir(item_full_path)
         else:
-            print("%s - %s bytes" % (item_full_path, os.stat(item_full_path).st_size))
+            data['all_original_files'].append(item_full_path)
+            #print("%s - %s bytes" % (item_full_path, os.stat(item_full_path).st_size))
 
 
 def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
     recurse_dir(root_dir=start)
+
 
 if __name__ == "__main__":
     start(start=os.getcwd())
