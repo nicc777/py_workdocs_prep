@@ -191,7 +191,7 @@ class TestBasicWalkDir(unittest.TestCase):
         recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
         self.assertEqual(3, len(data['all_original_dirs_only']))
         self.assertEqual(7, len(data['all_original_files']))
-        self.assertEqual(2, len(data['processing']['directories_to_delete']))
+        self.assertEqual(2, len(data['processing']['directories_deleted']))
         for directory in data['all_original_dirs_only']:
             self.assertTrue(os.path.exists(directory), 'directory={}'.format(directory))
             self.assertTrue(os.path.isdir(directory), 'directory={}'.format(directory))
@@ -201,7 +201,7 @@ class TestBasicWalkDir(unittest.TestCase):
                 self.assertTrue(os.path.isfile(item), 'item={}'.format(item))
             else:
                 self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
-        for item in data['processing']['directories_to_delete']:
+        for item in data['processing']['directories_deleted']:
             self.assertTrue('venv' in item.lower(), 'item "{}" does not seem to contain the term "venv"'.format(item))
 
 # EOF
