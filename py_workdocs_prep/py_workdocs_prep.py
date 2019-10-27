@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 
 directories_to_delete_if_found = [
     '.git',
@@ -20,13 +21,17 @@ data = dict()
 data['all_original_files'] = list()
 data['all_original_dirs_only'] = list()
 data['processing'] = dict()
-data['processing']['directories_to_delete'] = list()
+data['processing']['directories_deleted'] = list()
 
 
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
     for term in directories_to_delete_if_found:
         if re.search(term, current_directory_name, re.IGNORECASE) is not None:
-            data['processing']['directories_to_delete'].append(current_directory_name)
+            try:
+                shutil.rmtree(current_directory_name)
+                data['processing']['directories_deleted'].append(current_directory_name)
+            except:
+                warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
             return True
     return False
 

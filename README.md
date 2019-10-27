@@ -2,17 +2,15 @@
 
 A bulk directory and file renaming utility to prepare files for migration to [AWS WorkDocs](https://aws.amazon.com/workdocs/)
 
-If you run the script, it will start to traverse the current directory a produce a file full of MS Windows Powershell commands that will perform either one of the following actions on an item:
+If you run the script, it will start to traverse the current directory and will do one of the following with each file and directory:
 
 * Keep as is
 * Rename
 * Delete
 
-The Powershell file will be save in the current working directory as `aws_workdocs_prep.ps1` - if the file exists, it will first be deleted!
+All actions taken will be written out to STDOUT after all operations is completed
 
-I did this so that you can manually review the actions before committing to any changes.
-
-**WARNING** The actions from the resulting Powershell script, when run, will make changes to your directories and/or files. It is *HIGHLY RECOMMENDED* you first do a full backup of your data.
+**WARNING** The actions will make changes to your directories and/or files. It is *HIGHLY RECOMMENDED* you first do a full backup of your data.
 
 This project was a result of me migrating from Dropbox to AWS Workdocs and finding a lot issues due to the names of files and/or directories that were invalid in AWS Workdocs.
 
@@ -45,11 +43,11 @@ I decided that after the transformation, I would just print WARNINGS for each it
 
 ### Getting rid of redundant files
 
-As I used Dropbox as a "working" documents directory I ended up with a large number `.git`, `venv` and `node_modules` directories (to name a view examples). So the obvious first step for me was to delete all these directories.
+As I used Dropbox as a "working" documents directory I ended up with a large number `.git`, `venv` and `node_modules` directories (to name a view examples). So the obvious first step for me was to delete all these directories. (`DONE`)
 
-Files that will also be deleted include files starting or ending with the tilde (`~`) character.
+Files that will also be deleted include files starting or ending with the tilde (`~`) character. (`PENDING`)
 
-Files ending in `.tmp` will also be deleted.
+Files ending in `.tmp` will also be deleted. (`PENDING`)
 
 ### Directory and file renaming strategy
 
