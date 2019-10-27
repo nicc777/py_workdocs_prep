@@ -1,4 +1,5 @@
 import os
+import re
 
 directories_to_delete_if_found = [
     '.git',
@@ -19,8 +20,18 @@ data = dict()
 data['all_original_files'] = list()
 data['all_original_dirs_only'] = list()
 data['processing'] = dict()
+data['processing']['directories_to_delete'] = list()
 
-def recurse_dir(root_dir):
+
+def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
+    for term in directories_to_delete_if_found:
+        if re.search(term, current_directory_name, re.IGNORECASE) is not None:
+            data['processing']['directories_to_delete'].append(current_directory_name)
+            return True
+    return False
+
+
+def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_delete_if_found):
     '''
     Note: Initial pattern from https://www.devdungeon.com/content/walk-directory-python was adopted in the final product.
     '''
@@ -31,8 +42,9 @@ def recurse_dir(root_dir):
             warnings.append('Ignoring based on configuration: "{}"'.format(item_full_path))
         else:
             if os.path.isdir(item_full_path):
-                data['all_original_dirs_only'].append(item_full_path)
-                recurse_dir(item_full_path)
+                if is_directory_to_be_deleted(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found) is False:
+                    data['all_original_dirs_only'].append(item_full_path)
+                    recurse_dir(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found)
             else:
                 data['all_original_files'].append(item_full_path)
                 #print("%s - %s bytes" % (item_full_path, os.stat(item_full_path).st_size))
