@@ -17,6 +17,10 @@ from py_workdocs_prep.py_workdocs_prep import recurse_dir, data
 
 
 PWD = os.getcwd()
+directories_to_delete_if_found = [
+    'venv*',
+    'node_modules'
+]
 
 
 def create_file_text_contents():
@@ -55,12 +59,18 @@ def create_test_data(pwd: str, test_data: list):
 ├── Test1
 │   ├── test1.txt
 │   ├── test2.txt
-│   └── test3.txt
+│   |── test3.txt
+│   └── vEnv            <- Mark for deletion
+│       |── test1.txt   <- ignore
+│       └── test2.txt   <- ignore
 │   
-├── Test1
+├── Test2
 │   ├── Test2 1
 │   │   |── test1.txt
 │   │   └── test2.txt
+│   ├── venv_1          <- Mark for deletion
+│   │   |── test1.txt   <- ignore
+│   │   └── test2.txt   <- ignore
 │   ├── test1.txt
 │   └── test2.txt
 '''
@@ -88,6 +98,22 @@ test_data = [
                         'Type': 'FILE',
                         'Contents': create_file_text_contents()
                     },
+                    {
+                        'Name': 'vEnv',
+                        'Type': 'DIR',
+                        'Contents': [
+                            {
+                                'Name': 'test1.txt',
+                                'Type': 'FILE',
+                                'Contents': create_file_text_contents()
+                            },
+                            {
+                                'Name': 'test2.txt',
+                                'Type': 'FILE',
+                                'Contents': create_file_text_contents()
+                            },
+                        ]
+                    },
                 ]
             },
             {
@@ -96,6 +122,22 @@ test_data = [
                 'Contents': [
                     {
                         'Name': 'Test2 1',
+                        'Type': 'DIR',
+                        'Contents': [
+                            {
+                                'Name': 'test1.txt',
+                                'Type': 'FILE',
+                                'Contents': create_file_text_contents()
+                            },
+                            {
+                                'Name': 'test2.txt',
+                                'Type': 'FILE',
+                                'Contents': create_file_text_contents()
+                            },
+                        ]
+                    },
+                    {
+                        'Name': 'venv_1',
                         'Type': 'DIR',
                         'Contents': [
                             {
@@ -146,9 +188,10 @@ class TestBasicWalkDir(unittest.TestCase):
         print('test data location: {}'.format(self.pwd))
 
     def test_recurse_dir(self):
-        recurse_dir(root_dir=self.pwd)
+        recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
         self.assertEqual(3, len(data['all_original_dirs_only']))
         self.assertEqual(7, len(data['all_original_files']))
+        self.assertEqual(2, len(data['processing']['directories_to_delete']))
         for directory in data['all_original_dirs_only']:
             self.assertTrue(os.path.exists(directory), 'directory={}'.format(directory))
             self.assertTrue(os.path.isdir(directory), 'directory={}'.format(directory))
@@ -158,5 +201,7 @@ class TestBasicWalkDir(unittest.TestCase):
                 self.assertTrue(os.path.isfile(item), 'item={}'.format(item))
             else:
                 self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
+        for item in data['processing']['directories_to_delete']:
+            self.assertTrue('venv' in item.lower(), 'item "{}" does not seem to contain the term "venv"'.format(item))
 
 # EOF
