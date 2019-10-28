@@ -37,7 +37,7 @@ setup(
     },
     entry_points={  
         'console_scripts': [
-            'wdp=py_workdocs_prep:start',
+            'wdp=py_workdocs_prep.py_workdocs_prep:start',
         ],
     },
     project_urls={  
