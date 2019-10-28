@@ -258,8 +258,8 @@ class TestBasicWalkDir(unittest.TestCase):
     def test_recurse_dir(self):
         recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
         self.assertEqual(3, len(data['all_original_dirs_only']))
-        self.assertEqual(9, len(data['all_original_files']))
-        self.assertEqual(2, len(data['processing']['directories_deleted']))
+        self.assertEqual(10, len(data['all_original_files']))
+        self.assertEqual(3, len(data['processing']['directories_deleted']))
         for directory in data['all_original_dirs_only']:
             self.assertTrue(os.path.exists(directory), 'directory={}'.format(directory))
             self.assertTrue(os.path.isdir(directory), 'directory={}'.format(directory))
@@ -278,8 +278,15 @@ class TestBasicWalkDir(unittest.TestCase):
                     renamed_files += 1
         # TODO complete in issue #6
         #self.assertEqual(2, renamed_files, 'Invalid number of renamed files.') 
+        venv_directory_deleted_seen = 0
+        dot_directory_deleted = 0
         for item in data['processing']['directories_deleted']:
-            self.assertTrue('venv' in item.lower(), 'item "{}" does not seem to contain the term "venv"'.format(item))
+            if 'venv' in item.lower():
+                venv_directory_deleted_seen += 1
+            if '.' in item:
+                dot_directory_deleted += 1
+        self.assertEqual(2, venv_directory_deleted_seen)
+        self.assertEqual(1, dot_directory_deleted)
         tilde_files_deleted = 0
         for item in data['processing']['files_deleted']:
             if '~' in item:
