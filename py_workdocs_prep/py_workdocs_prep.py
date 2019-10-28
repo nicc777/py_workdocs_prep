@@ -26,20 +26,36 @@ data['processing']['files_deleted'] = list()
 
 
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
+    last_part = current_directory_name.split(os.sep)[-1]
+    must_delete = False
     for term in directories_to_delete_if_found:
         if re.search(term, current_directory_name, re.IGNORECASE) is not None:
-            try:
-                shutil.rmtree(current_directory_name)
-                data['processing']['directories_deleted'].append(current_directory_name)
-            except:
-                warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
-            return True
+            must_delete = True
+    if re.search('.tmp$', current_directory_name):
+        must_delete = True
+    if re.search('^\\.', last_part) is not None or re.search('\\.$', last_part):
+        must_delete = True
+    if must_delete is True:
+        try:
+            shutil.rmtree(current_directory_name)
+            data['processing']['directories_deleted'].append(current_directory_name)
+        except:
+            warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
+        return True
     return False
 
 
 def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->bool:
     file = current_file_with_full_path.split(os.sep)[-1]
+    last_part = current_file_with_full_path.split(os.sep)[-1]
+    must_delete = False
     if re.search('^~', file) is not None or re.search('~$', file) is not None:
+        must_delete = True
+    if re.search('.tmp$', current_file_with_full_path):
+        must_delete = True
+    if re.search('^\\.', last_part) is not None or re.search('\\.$', last_part):
+        must_delete = True
+    if must_delete is True:
         try:
             os.unlink(current_file_with_full_path)
             data['processing']['files_deleted'].append(current_file_with_full_path)
