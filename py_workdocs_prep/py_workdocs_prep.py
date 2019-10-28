@@ -26,6 +26,7 @@ data['processing'] = dict()
 data['processing']['directories_deleted'] = list()
 data['processing']['files_deleted'] = list()
 data['processing']['renamed_files'] = list()
+data['processing']['renamed_directories'] = list()
 
 
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
@@ -99,6 +100,38 @@ def file_rename(current_file_with_full_path: str)->str:
     return target_file
 
 
+def directory_rename(current_directory_name: str)->str:
+    dir_name = current_directory_name.split(os.sep)[-1]
+    path_name = ''
+    if os.sep == '/':
+        path_name = '/'.join(current_directory_name.split(os.sep)[:-1]) 
+    else:
+        path_name = '\\'.join(current_directory_name.split(os.sep)[:-1]) 
+    final_dir_name = ''
+
+    for char in dir_name:
+        if char not in VALID_NAME_CHARS:
+            final_dir_name = '{}{}'.format(final_dir_name, '_')
+        else:
+            final_dir_name = '{}{}'.format(final_dir_name, char)
+    target_dir = '{}{}{}'.format(path_name, os.sep, final_dir_name)
+    if dir_name != final_dir_name:
+        pattern = re.compile('__*')
+        final_dir_name = pattern.sub('_', final_dir_name)
+        target_dir = '{}{}{}'.format(path_name, os.sep, final_dir_name)
+        try:
+            shutil.move(current_directory_name, target_dir)
+            data['processing']['renamed_directories'].append(
+                (
+                    current_directory_name,
+                    target_dir,
+                )
+            )
+        except:
+            warnings.append('Error while moving directory "{}"'.format(current_directory_name))
+    return target_dir
+
+
 def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_delete_if_found):
     '''
     Note: Initial pattern from https://www.devdungeon.com/content/walk-directory-python was adopted in the final product.
@@ -111,6 +144,7 @@ def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_de
         else:
             if os.path.isdir(item_full_path):
                 if is_directory_to_be_deleted(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found) is False:
+                    item_full_path = directory_rename(current_directory_name=item_full_path)
                     data['all_original_dirs_only'].append(item_full_path)
                     recurse_dir(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found)
             else:

@@ -308,8 +308,7 @@ class TestBasicWalkDir(unittest.TestCase):
                 self.assertTrue(os.path.isfile(item), 'item={}'.format(item))
             else:
                 self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
-        
-        # TODO - loop through warning to extract all renamed files and compare agains existence 
+        self.assertEqual(2, len(data['processing']['renamed_directories']), 'Invalid number of renamed directories.') 
         self.assertEqual(4, len(data['processing']['renamed_files']), 'Invalid number of renamed files.') 
         venv_directory_deleted_seen = 0
         dot_directory_deleted = 0
