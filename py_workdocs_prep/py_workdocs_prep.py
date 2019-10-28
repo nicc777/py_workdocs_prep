@@ -22,6 +22,7 @@ data['all_original_files'] = list()
 data['all_original_dirs_only'] = list()
 data['processing'] = dict()
 data['processing']['directories_deleted'] = list()
+data['processing']['files_deleted'] = list()
 
 
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
@@ -33,6 +34,18 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
             except:
                 warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
             return True
+    return False
+
+
+def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->bool:
+    file = current_file_with_full_path.split(os.sep)[-1]
+    if re.search('^~', file) is not None or re.search('~$', file) is not None:
+        try:
+            os.unlink(current_file_with_full_path)
+            data['processing']['files_deleted'].append(current_file_with_full_path)
+        except:
+            warnings.append('Error while deleting file "{}"'.format(current_file_with_full_path))
+        return True
     return False
 
 
@@ -51,8 +64,11 @@ def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_de
                     data['all_original_dirs_only'].append(item_full_path)
                     recurse_dir(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found)
             else:
-                data['all_original_files'].append(item_full_path)
-                #print("%s - %s bytes" % (item_full_path, os.stat(item_full_path).st_size))
+                keep_file = 0
+                if is_file_starting_or_ending_with_tilde(current_file_with_full_path=item_full_path) is False:
+                    keep_file += 1
+                if keep_file > 0:
+                    data['all_original_files'].append(item_full_path)
 
 
 def dump_warnings():

@@ -57,10 +57,12 @@ def create_test_data(pwd: str, test_data: list):
 '''Test data
 .
 ├── Test1
+│   ├── ~test1.txt      <- delete
 │   ├── test1.txt
 │   ├── test2.txt
 │   |── test3.txt
-│   └── vEnv            <- Mark for deletion
+│   └── vEnv            <- delete
+│       |── ~test1.txt  <- ignore
 │       |── test1.txt   <- ignore
 │       └── test2.txt   <- ignore
 │   
@@ -68,10 +70,11 @@ def create_test_data(pwd: str, test_data: list):
 │   ├── Test2 1
 │   │   |── test1.txt
 │   │   └── test2.txt
-│   ├── venv_1          <- Mark for deletion
+│   ├── venv_1          <- delete
 │   │   |── test1.txt   <- ignore
 │   │   └── test2.txt   <- ignore
 │   ├── test1.txt
+│   ├── test2.txt~      <- delete
 │   └── test2.txt
 '''
 test_data = [
@@ -83,6 +86,11 @@ test_data = [
                 'Name': 'Test1',
                 'Type': 'DIR',
                 'Contents': [
+                    {
+                        'Name': '~test1.txt',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
                     {
                         'Name': 'test1.txt',
                         'Type': 'FILE',
@@ -102,6 +110,11 @@ test_data = [
                         'Name': 'vEnv',
                         'Type': 'DIR',
                         'Contents': [
+                            {
+                                'Name': '~test1.txt',
+                                'Type': 'FILE',
+                                'Contents': create_file_text_contents()
+                            },
                             {
                                 'Name': 'test1.txt',
                                 'Type': 'FILE',
@@ -158,6 +171,11 @@ test_data = [
                         'Contents': create_file_text_contents()
                     },
                     {
+                        'Name': 'test2.txt~',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
                         'Name': 'test2.txt',
                         'Type': 'FILE',
                         'Contents': create_file_text_contents()
@@ -203,5 +221,10 @@ class TestBasicWalkDir(unittest.TestCase):
                 self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
         for item in data['processing']['directories_deleted']:
             self.assertTrue('venv' in item.lower(), 'item "{}" does not seem to contain the term "venv"'.format(item))
+        tilde_files_deleted = 0
+        for item in data['processing']['files_deleted']:
+            if '~' in item:
+                tilde_files_deleted += 1
+        self.assertEqual(2, tilde_files_deleted, 'It appears not all tilde files were deleted')
 
 # EOF
