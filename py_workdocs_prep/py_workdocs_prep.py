@@ -1,8 +1,10 @@
 import os
 import re
 import shutil
+from datetime import datetime
 
 VALID_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890-_.'
+FULL_LENGTH_WARNING_THRESHOLD = 244
 
 directories_to_delete_if_found = [
     '.git',
@@ -158,19 +160,70 @@ def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_de
                     warnings.append('File "{}" was marked to be deleted'.format(item_full_path))
 
 
-def dump_warnings():
-    if len(warnings) > 0:
-        print('\nWARNINGS\n--------\n\n')
-        for w in warnings:
-            print('warning> {}'.format(w))
-    else:
-        print('No warnings')
+def report_producer():
+    report_file_name = '{}{}py_workdocs_prep.log'.format(
+        os.getcwd(),
+        os.sep
+    )
+    with open(report_file_name, 'a') as out_file:
+        out_file.write('----------------------------------------\n')
+        out_file.write('NEW RUN: pwd={}\n'.format(os.getcwd()))
+        out_file.write('TIMESTAMP (UTC): {}\n'.format(datetime.utcnow().isoformat()))
+        out_file.write('----------------------------------------\n')
+        out_file.writelines('\n\n')
+        out_file.writelines('Final File List:\n')
+        out_file.writelines('---------------\n\n')
+        over_length_warning = list()
+        for item in data['all_original_files']:
+            out_file.write(
+                'final file [{}]: {}\n'.format(
+                    '{}'.format(len(item)).rjust(6),
+                    item
+                )
+            )
+            if len(item) > FULL_LENGTH_WARNING_THRESHOLD:
+                over_length_warning.append(item)
+        out_file.writelines('\n\n')
+        out_file.writelines('Deleted Files:\n')
+        out_file.writelines('-------------\n\n')
+        for item in data['processing']['files_deleted']:
+            out_file.write('deleted file: {}'.format(item))
+        out_file.writelines('\n\n')
+        out_file.writelines('Deleted Directories:\n')
+        out_file.writelines('-------------------\n\n')
+        for item in data['processing']['directories_deleted']:
+            out_file.write('deleted directory: {}\n'.format(item))
+        out_file.writelines('\n\n')
+        out_file.writelines('Renamed Files:\n')
+        out_file.writelines('-------------\n\n')
+        for item in data['processing']['renamed_files']:
+            out_file.write('renamed file: {}\n'.format(item))
+        out_file.writelines('\n\n')
+        out_file.writelines('Renamed Directories:\n')
+        out_file.writelines('-------------------\n\n')
+        for item in data['processing']['renamed_directories']:
+            out_file.write('renamed directory: {}\n'.format(item))
+        out_file.writelines('\n\n')
+        out_file.writelines('WARNINGS:\n')
+        out_file.writelines('--------\n\n')
+        if len(warnings) > 0:
+            for item in warnings:
+                out_file.write('warning: {}\n'.format(item))
+        else:
+            out_file.write('warning: none\n')
+        out_file.writelines('\n\n')
+        out_file.writelines('LENGTH WARNINGS:\n')
+        out_file.writelines('--------\n\n')
+        for item in over_length_warning:
+            out_file.write('length warning: {}\n'.format(item))
+        out_file.write('\n------------- DONE -------------------\n\n\n')
+    print('Written log to "{}"'.format(report_file_name))
 
 
 def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
     recurse_dir(root_dir=start)
-    dump_warnings()
+    report_producer()
 
 
 if __name__ == "__main__":
