@@ -74,8 +74,17 @@ def create_test_data(pwd: str, test_data: list):
 │   │   |── test1.txt   <- ignore
 │   │   └── test2.txt   <- ignore
 │   ├── test1.txt
+│   ├── test 4.txt.tmp  <- delete
+│   ├── test 4.txt.     <- delete
+│   ├── .test 4.txt     <- delete
+│   ├── test 3 +.txt
+│   ├── tes++t 3 +.txt
 │   ├── test2.txt~      <- delete
 │   └── test2.txt
+│   
+├── .Test3              <- delete
+│   ├── test1.txt       <- ignore
+│   └── test2.txt       <- ignore
 '''
 test_data = [
     {
@@ -171,6 +180,31 @@ test_data = [
                         'Contents': create_file_text_contents()
                     },
                     {
+                        'Name': 'test 4.txt.tmp',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
+                        'Name': 'test 4.txt.',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
+                        'Name': '.test 4.txt',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
+                        'Name': 'test 3 +.txt',     # Must be changed to 'test 3 _.txt'
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
+                        'Name': 'tes++t 3 +.txt',    # Must be changed to 'tes_t 3 _.txt'
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
                         'Name': 'test2.txt~',
                         'Type': 'FILE',
                         'Contents': create_file_text_contents()
@@ -182,6 +216,22 @@ test_data = [
                     },
                 ]
             },
+            {
+                'Name': '.Test3',
+                'Type': 'DIR',
+                'Contents': [
+                    {
+                        'Name': 'test1.txt',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                    {
+                        'Name': 'test2.txt',
+                        'Type': 'FILE',
+                        'Contents': create_file_text_contents()
+                    },
+                ]
+            }
         ]
     },
 ]
@@ -208,17 +258,26 @@ class TestBasicWalkDir(unittest.TestCase):
     def test_recurse_dir(self):
         recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
         self.assertEqual(3, len(data['all_original_dirs_only']))
-        self.assertEqual(7, len(data['all_original_files']))
+        self.assertEqual(9, len(data['all_original_files']))
         self.assertEqual(2, len(data['processing']['directories_deleted']))
         for directory in data['all_original_dirs_only']:
             self.assertTrue(os.path.exists(directory), 'directory={}'.format(directory))
             self.assertTrue(os.path.isdir(directory), 'directory={}'.format(directory))
+        renamed_files = 0
         for item in data['all_original_files']:
             self.assertTrue(os.path.exists(item))
             if '.txt' in item:
                 self.assertTrue(os.path.isfile(item), 'item={}'.format(item))
             else:
                 self.assertTrue(os.path.isdir(item), 'item={}'.format(item))
+            if '3' in item:
+                if 'test 3 +.txt' in item or 'tes++t 3 +.txt' in item:
+                    # self.fail('Item "{}" not expected at this point'.format(item))
+                    pass # TODO fix in issue #6
+                if 'test 3 _.txt' in item or 'tes_t 3 +.txt' in item:
+                    renamed_files += 1
+        # TODO complete in issue #6
+        #self.assertEqual(2, renamed_files, 'Invalid number of renamed files.') 
         for item in data['processing']['directories_deleted']:
             self.assertTrue('venv' in item.lower(), 'item "{}" does not seem to contain the term "venv"'.format(item))
         tilde_files_deleted = 0

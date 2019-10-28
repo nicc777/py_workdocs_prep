@@ -34,6 +34,21 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
             except:
                 warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
             return True
+    if re.search('.tmp$', current_directory_name):
+        try:
+            shutil.rmtree(current_directory_name)
+            data['processing']['directories_deleted'].append(current_directory_name)
+        except:
+            warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
+        return True
+    last_part = current_directory_name.split(os.sep)[-1]
+    if re.search('^\.', last_part) is not None or re.search('\.$', last_part):
+        try:
+            shutil.rmtree(current_directory_name)
+            data['processing']['directories_deleted'].append(current_directory_name)
+        except:
+            warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
+        return True
     return False
 
 

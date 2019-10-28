@@ -25,7 +25,7 @@ Here is the most important limitations as of 2019-10-26:
   * Tildes at the beginning or end–For example: `file.doc~`, `~file.doc`, or `~$file.doc`
   * File names ending in .tmp–For example: `file.tmp`
   * File names exactly matching these case-sensitive terms: `Microsoft User Data`, `Outlook files`, `Thumbs.db`, or `Thumbnails`
-  * File names containing any of these characters–* (asterisk), / (forward slash), \ (back slash), : (colon), < (less than), > (greater than), ? (question mark), | (vertical bar/pipe), " (double quotes), or \202E (character code 202E)
+  * File names containing any of these characters – `*` (asterisk), `/` (forward slash), `\` (back slash), `:` (colon), `<` (less than), `>` (greater than), `?` (question mark), `|` (vertical bar/pipe), `"` (double quotes), or \202E (character code 202E)
 
 ## Strategy
 
