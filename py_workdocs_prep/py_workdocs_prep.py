@@ -4,6 +4,7 @@ import shutil
 from datetime import datetime
 
 VALID_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890-_.'
+FULL_LENGTH_WARNING_THRESHOLD = 244
 
 directories_to_delete_if_found = [
     '.git',
@@ -172,6 +173,7 @@ def report_producer():
         out_file.writelines('\n\n')
         out_file.writelines('Final File List:\n')
         out_file.writelines('---------------\n\n')
+        over_length_warning = list()
         for item in data['all_original_files']:
             out_file.write(
                 'final file [{}]: {}\n'.format(
@@ -179,6 +181,8 @@ def report_producer():
                     item
                 )
             )
+            if len(item) > FULL_LENGTH_WARNING_THRESHOLD:
+                over_length_warning.append(item)
         out_file.writelines('\n\n')
         out_file.writelines('Deleted Files:\n')
         out_file.writelines('-------------\n\n')
@@ -207,6 +211,11 @@ def report_producer():
                 out_file.write('warning: {}\n'.format(item))
         else:
             out_file.write('warning: none\n')
+        out_file.writelines('\n\n')
+        out_file.writelines('LENGTH WARNINGS:\n')
+        out_file.writelines('--------\n\n')
+        for item in over_length_warning:
+            out_file.write('length warning: {}\n'.format(item))
         out_file.write('\n------------- DONE -------------------\n\n\n')
     print('Written log to "{}"'.format(report_file_name))
 
