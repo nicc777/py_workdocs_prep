@@ -13,7 +13,7 @@ import unittest
 import random
 import os
 import shutil
-from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings
+from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings, backup_files
 
 
 PWD = os.getcwd()
@@ -324,5 +324,30 @@ class TestBasicWalkDir(unittest.TestCase):
             if '~' in item:
                 tilde_files_deleted += 1
         self.assertEqual(2, tilde_files_deleted, 'It appears not all tilde files were deleted')
+
+
+class TestBackup(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        create_test_data(pwd=PWD, test_data=test_data)
+
+    @classmethod
+    def tearDownClass(cls):
+        pwd = '{}{}{}'.format(PWD, os.sep, test_data[0]['Name'])
+        try:
+            shutil.rmtree(pwd)
+        except:
+            print('Error while deleting directory "{}"'.format(pwd))
+
+    def setUp(self):
+        self.pwd = '{}{}{}'.format(PWD, os.sep, test_data[0]['Name'])
+        print('test data location: {}'.format(self.pwd))
+
+    def test_backup(self):
+        backup_file = backup_files(root_dir=self.pwd)
+        self.assertTrue(os.path.exists(backup_file))
+        self.assertTrue(os.stat(backup_file).st_size > 0)
+        os.unlink(backup_file)
 
 # EOF
