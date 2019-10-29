@@ -2,6 +2,10 @@ import os
 import re
 import shutil
 from datetime import datetime
+import argparse
+import tarfile
+import gzip
+
 
 VALID_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890-_.'
 FULL_LENGTH_WARNING_THRESHOLD = 244
@@ -53,7 +57,6 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
 
 def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->bool:
     file_name = current_file_with_full_path.split(os.sep)[-1]
-    #last_part = current_file_with_full_path.split(os.sep)[-1]  # Refactored furing issue #6 - can be deleted (duplicate of file_name)
     must_delete = False
     if re.search('^~', file_name) is not None or re.search('~$', file_name) is not None:
         must_delete = True
@@ -134,7 +137,7 @@ def directory_rename(current_directory_name: str)->str:
     return target_dir
 
 
-def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_delete_if_found):
+def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_to_delete_if_found):
     '''
     Note: Initial pattern from https://www.devdungeon.com/content/walk-directory-python was adopted in the final product.
     '''
@@ -158,6 +161,51 @@ def recurse_dir(root_dir, directories_to_delete_if_found: list=directories_to_de
                     data['all_original_files'].append(final_file_name_and_full_path)
                 else:
                     warnings.append('File "{}" was marked to be deleted'.format(item_full_path))
+
+
+def archive_recurse_dir(directory: str, tar_handler: object):
+    directory = os.path.abspath(directory)
+    for item in os.listdir(directory):
+        item_full_path = os.path.join(directory, item)
+        if os.path.isdir(item_full_path):
+            archive_recurse_dir(directory=item_full_path, tar_handler=tar_handler)
+        else:
+            try:
+                tar_handler.add(item_full_path)
+                print('Archived "{}"'.format(item_full_path))
+            except:
+                print('FAILED to add "{}" to archive'.format(item_full_path))
+
+
+def backup_files(root_dir: str)->str:
+    backup_file = '{}{}backup_py_workdocs_prep_{}.tar'.format(
+        os.getcwd(),
+        os.sep,
+        int(datetime.utcnow().timestamp())
+    )
+    print('Backing up to archive "{}"'.format(backup_file))
+    tar = tarfile.open(backup_file, 'w')
+    archive_recurse_dir(directory=root_dir, tar_handler=tar)
+    tar.close()
+    backup_file_gz = '{}.gz'.format(backup_file)
+    with open(backup_file, 'rb') as f_in:
+        with gzip.open(backup_file_gz, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.unlink(backup_file)
+    print('Backup complete')
+    return backup_file_gz
+
+
+def parse_command_line_args(root_dir: str):
+    parser = argparse.ArgumentParser(description='Prepare a directory for migration to AWS WorkDocs')
+    parser.add_argument(
+        '-b', '--backup',
+        action='store_true',
+        help='Backup the files in the selected directory first. Files will be added to a tar archive and which will then be gzipped'
+    )
+    args = parser.parse_args()
+    if args.backup is True:
+        backup_files(root_dir=root_dir)
 
 
 def report_producer():
@@ -222,6 +270,7 @@ def report_producer():
 
 def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
+    parse_command_line_args(root_dir=start)
     recurse_dir(root_dir=start)
     report_producer()
 
