@@ -27,6 +27,29 @@ Here is the most important limitations as of 2019-10-26:
   * File names exactly matching these case-sensitive terms: `Microsoft User Data`, `Outlook files`, `Thumbs.db`, or `Thumbnails`
   * File names containing any of these characters – `*` (asterisk), `/` (forward slash), `\` (back slash), `:` (colon), `<` (less than), `>` (greater than), `?` (question mark), `|` (vertical bar/pipe), `"` (double quotes), or \202E (character code 202E)
 
+## Quick Start
+
+The following examples assume a MS Windows system, as the intend is to prepare a directory for AWS WorkDocs, which typically only has clients for Windows (unless you are on mobile).
+
+### From Source
+
+Prerequisites:
+
+* Python 3.7+
+* git
+
+Assuming your target directory is something like `D:\Dropbox`, and you want to backup first, you can run the following commands:
+
+```bash
+> git clone https://github.com/nicc777/py_workdocs_prep.git
+> cd py_workdocs_prep
+> python setup.py sdist
+> pip install dist\*
+> d:
+> cd Dropbox
+> wdp -b
+```
+
 ## Strategy
 
 I had a very large number of files (600,000+) and it turned out a lot of them violated the mentioned restrictions. I had to make a plan...
