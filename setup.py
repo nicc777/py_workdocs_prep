@@ -9,8 +9,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='py_workdocs_prep',  
-    version='0.3.1',
-    download_url = 'https://github.com/nicc777/py_workdocs_prep/releases/download/release-0.3.1/py_workdocs_prep-0.3.1.tar.gz',
+    version='0.4.0',
+    download_url = 'https://github.com/nicc777/py_workdocs_prep/releases/download/release-0.4.0/py_workdocs_prep-0.4.0.tar.gz',
     description='AWS Workdocs Preparation Utility',  
     long_description=long_description,  
     long_description_content_type='text/markdown',  
@@ -18,12 +18,14 @@ setup(
     author='Nico Coetzee',  
     author_email='nicc777@gmail.com',  
     classifiers=[  
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: End Users/Desktop',
         'Environment :: Console',
         'Environment :: MacOS X',
         'Environment :: Win32 (MS Windows)',
-        'Topic :: Software Development :: Build Tools',
+        'Topic :: System :: Archiving',
+        'Topic :: System :: Filesystems',
+        'Topic :: Utilities',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
