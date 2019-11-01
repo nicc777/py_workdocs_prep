@@ -6,10 +6,14 @@ import argparse
 import tarfile
 import gzip
 import traceback
+from py_workdocs_prep import LogWrapper
 
 
+L = LogWrapper()
 VALID_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890-_.'
 FULL_LENGTH_WARNING_THRESHOLD = 244
+
+test_mode = False
 
 directories_to_delete_if_found = [
     '.git',
@@ -36,6 +40,13 @@ data['processing']['renamed_files'] = list()
 data['processing']['renamed_directories'] = list()
 
 
+def set_test_mode():
+    '''Only used for unit testing
+    '''
+    global test_mode
+    test_mode = True
+
+
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
     last_part = current_directory_name.split(os.sep)[-1]
     must_delete = False
@@ -50,12 +61,14 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
         if must_delete is True:
             try:
                 shutil.rmtree(current_directory_name)
-                data['processing']['directories_deleted'].append(current_directory_name)
+                if test_mode:
+                    data['processing']['directories_deleted'].append(current_directory_name)
+                L.info(message='deleted directory "{}"'.format(current_directory_name))
             except:
-                warnings.append('Error while deleting directory "{}"'.format(current_directory_name))
+                L.warning(message='Error while deleting directory "{}"'.format(current_directory_name))
             return True
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
     return False
 
 
@@ -72,12 +85,14 @@ def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->boo
         if must_delete is True:
             try:
                 os.unlink(current_file_with_full_path)
-                data['processing']['files_deleted'].append(current_file_with_full_path)
+                if test_mode:
+                    data['processing']['files_deleted'].append(current_file_with_full_path)
+                L.info(message='deleted file "{}"'.format(current_file_with_full_path))
             except:
-                warnings.append('Error while deleting file "{}"'.format(current_file_with_full_path))
+                L.warning(message='Error while deleting file "{}"'.format(current_file_with_full_path))
             return True
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
     return False
 
 
@@ -102,16 +117,18 @@ def file_rename(current_file_with_full_path: str)->str:
             target_file = '{}{}{}'.format(path_name, os.sep, final_file_name)
             try:
                 shutil.move(current_file_with_full_path, target_file)
-                data['processing']['renamed_files'].append(
-                    (
-                        current_file_with_full_path,
-                        target_file,
+                if test_mode:
+                    data['processing']['renamed_files'].append(
+                        (
+                            current_file_with_full_path,
+                            target_file,
+                        )
                     )
-                )
+                L.info(message='renamed file "{}" to "{}"'.format(current_file_with_full_path, target_file))
             except:
-                warnings.append('Error while moving file "{}"'.format(current_file_with_full_path))
+                L.warning(message='Error while moving file "{}"'.format(current_file_with_full_path))
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         target_file = current_file_with_full_path
     return target_file
 
@@ -138,16 +155,18 @@ def directory_rename(current_directory_name: str)->str:
             target_dir = '{}{}{}'.format(path_name, os.sep, final_dir_name)
             try:
                 shutil.move(current_directory_name, target_dir)
-                data['processing']['renamed_directories'].append(
-                    (
-                        current_directory_name,
-                        target_dir,
+                if test_mode:
+                    data['processing']['renamed_directories'].append(
+                        (
+                            current_directory_name,
+                            target_dir,
+                        )
                     )
-                )
+                L.info(message='renamed directory "{}" to "{}"'.format(current_directory_name, target_dir))
             except:
-                warnings.append('Error while moving directory "{}"'.format(current_directory_name))
+                L.warning(message='Error while moving directory "{}"'.format(current_directory_name))
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         target_dir = current_directory_name
     return target_dir
 
@@ -161,12 +180,14 @@ def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_
         for item in os.listdir(root_dir):
             item_full_path = os.path.join(root_dir, item)
             if item in ignore_names_exact:
-                warnings.append('Ignoring based on configuration: "{}"'.format(item_full_path))
+                L.warning(message='ignoring based on configuration: "{}"'.format(item_full_path))
             else:
                 if os.path.isdir(item_full_path):
                     if is_directory_to_be_deleted(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found) is False:
                         item_full_path = directory_rename(current_directory_name=item_full_path)
-                        data['all_original_dirs_only'].append(item_full_path)
+                        if test_mode:
+                            data['all_original_dirs_only'].append(item_full_path)
+                        L.info(message='original directory: "{}" '.format(item_full_path))
                         recurse_dir(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found)
                 else:
                     keep_file = 0
@@ -174,11 +195,13 @@ def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_
                         keep_file += 1
                     if keep_file > 0:
                         final_file_name_and_full_path = file_rename(current_file_with_full_path=item_full_path)
-                        data['all_original_files'].append(final_file_name_and_full_path)
+                        if test_mode:
+                            data['all_original_files'].append(final_file_name_and_full_path)
+                        L.info(message='original file: "{}" '.format(final_file_name_and_full_path))
                     else:
-                        warnings.append('File "{}" was marked to be deleted'.format(item_full_path))
+                        L.warning(message='File "{}" was marked to be deleted'.format(item_full_path))
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
 
 
 def archive_recurse_dir(directory: str, tar_handler: object):
@@ -191,11 +214,11 @@ def archive_recurse_dir(directory: str, tar_handler: object):
             else:
                 try:
                     tar_handler.add(item_full_path)
-                    print('Archived "{}"'.format(item_full_path))
+                    L.info(message='Archived "{}"'.format(item_full_path))
                 except:
-                    print('FAILED to add "{}" to archive'.format(item_full_path))
+                    L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
 
 
 def backup_files(root_dir: str)->str:
@@ -216,7 +239,7 @@ def backup_files(root_dir: str)->str:
         os.unlink(backup_file)
         print('Backup complete')
     except:
-        traceback.print_exc()
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         backup_file_gz = ''
     return backup_file_gz
 
@@ -233,74 +256,13 @@ def parse_command_line_args(root_dir: str):
         if args.backup is True:
             backup_files(root_dir=root_dir)
     except:
-        traceback.print_exc()
-
-
-def report_producer():
-    report_file_name = '{}{}py_workdocs_prep.log'.format(
-        os.getcwd(),
-        os.sep
-    )
-    with open(report_file_name, 'a') as out_file:
-        out_file.write('----------------------------------------\n')
-        out_file.write('NEW RUN: pwd={}\n'.format(os.getcwd()))
-        out_file.write('TIMESTAMP (UTC): {}\n'.format(datetime.utcnow().isoformat()))
-        out_file.write('----------------------------------------\n')
-        out_file.writelines('\n\n')
-        out_file.writelines('Final File List:\n')
-        out_file.writelines('---------------\n\n')
-        over_length_warning = list()
-        for item in data['all_original_files']:
-            out_file.write(
-                'final file [{}]: {}\n'.format(
-                    '{}'.format(len(item)).rjust(6),
-                    item
-                )
-            )
-            if len(item) > FULL_LENGTH_WARNING_THRESHOLD:
-                over_length_warning.append(item)
-        out_file.writelines('\n\n')
-        out_file.writelines('Deleted Files:\n')
-        out_file.writelines('-------------\n\n')
-        for item in data['processing']['files_deleted']:
-            out_file.write('deleted file: {}'.format(item))
-        out_file.writelines('\n\n')
-        out_file.writelines('Deleted Directories:\n')
-        out_file.writelines('-------------------\n\n')
-        for item in data['processing']['directories_deleted']:
-            out_file.write('deleted directory: {}\n'.format(item))
-        out_file.writelines('\n\n')
-        out_file.writelines('Renamed Files:\n')
-        out_file.writelines('-------------\n\n')
-        for item in data['processing']['renamed_files']:
-            out_file.write('renamed file: {}\n'.format(item))
-        out_file.writelines('\n\n')
-        out_file.writelines('Renamed Directories:\n')
-        out_file.writelines('-------------------\n\n')
-        for item in data['processing']['renamed_directories']:
-            out_file.write('renamed directory: {}\n'.format(item))
-        out_file.writelines('\n\n')
-        out_file.writelines('WARNINGS:\n')
-        out_file.writelines('--------\n\n')
-        if len(warnings) > 0:
-            for item in warnings:
-                out_file.write('warning: {}\n'.format(item))
-        else:
-            out_file.write('warning: none\n')
-        out_file.writelines('\n\n')
-        out_file.writelines('LENGTH WARNINGS:\n')
-        out_file.writelines('--------\n\n')
-        for item in over_length_warning:
-            out_file.write('length warning: {}\n'.format(item))
-        out_file.write('\n------------- DONE -------------------\n\n\n')
-    print('Written log to "{}"'.format(report_file_name))
+        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
 
 
 def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
     parse_command_line_args(root_dir=start)
     recurse_dir(root_dir=start)
-    report_producer()
 
 
 if __name__ == "__main__":
