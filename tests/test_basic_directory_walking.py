@@ -13,7 +13,7 @@ import unittest
 import random
 import os
 import shutil
-from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings, backup_files
+from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings, backup_files, set_test_mode
 
 
 PWD = os.getcwd()
@@ -295,6 +295,7 @@ class TestBasicWalkDir(unittest.TestCase):
         print('test data location: {}'.format(self.pwd))
 
     def test_recurse_dir(self):
+        set_test_mode()
         recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
         self.assertEqual(5, len(data['all_original_dirs_only']))
         self.assertEqual(14, len(data['all_original_files']))
