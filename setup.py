@@ -9,8 +9,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='py_workdocs_prep',  
-    version='0.5.0',
-    download_url = 'https://github.com/nicc777/py_workdocs_prep/releases/download/release-0.5.0/py_workdocs_prep-0.5.0.tar.gz',
+    version='0.5.1',
+    download_url = 'https://github.com/nicc777/py_workdocs_prep/releases/download/release-0.5.1/py_workdocs_prep-0.5.1.tar.gz',
     description='AWS Workdocs Preparation Utility',  
     long_description=long_description,  
     long_description_content_type='text/markdown',  
