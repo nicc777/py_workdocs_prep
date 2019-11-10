@@ -73,6 +73,7 @@ class LogWrapper:
     def __init__(self, logger_impl=logger):
         self.logger = logger_impl
         self.debug_flag = DEBUG
+        self.dry_run = False
 
     def _format_msg(self, stack_data: list, message: str)->str:
         if message is not None:
@@ -85,6 +86,8 @@ class LogWrapper:
                         stack_data[2],
                         message
                     )
+            if self.dry_run is True:
+                message = '[DRY-RUN]  {}'.format(message)
             return message
         return 'NO_INPUT_MESSAGE'
 

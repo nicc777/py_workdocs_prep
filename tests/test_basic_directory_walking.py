@@ -13,7 +13,7 @@ import unittest
 import random
 import os
 import shutil
-from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings, backup_files, set_test_mode
+from py_workdocs_prep.py_workdocs_prep import recurse_dir, data, warnings, backup_files, set_test_mode, FULL_LENGTH_WARNING_THRESHOLD
 
 
 PWD = os.getcwd()
@@ -296,7 +296,7 @@ class TestBasicWalkDir(unittest.TestCase):
 
     def test_recurse_dir(self):
         set_test_mode()
-        recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
+        recurse_dir(root_dir=self.pwd, delete_dirs_if_found_list=directories_to_delete_if_found)
         self.assertEqual(5, len(data['all_original_dirs_only']))
         self.assertEqual(14, len(data['all_original_files']))
         self.assertEqual(3, len(data['processing']['directories_deleted']))
@@ -350,5 +350,30 @@ class TestBackup(unittest.TestCase):
         self.assertTrue(os.path.exists(backup_file))
         self.assertTrue(os.stat(backup_file).st_size > 0)
         os.unlink(backup_file)
+
+
+class TestMaximumLengthValidationAndWarning(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        create_test_data(pwd=PWD, test_data=test_data)
+
+    @classmethod
+    def tearDownClass(cls):
+        pwd = '{}{}{}'.format(PWD, os.sep, test_data[0]['Name'])
+        try:
+            shutil.rmtree(pwd)
+        except:
+            print('Error while deleting directory "{}"'.format(pwd))
+
+    def setUp(self):
+        self.pwd = '{}{}{}'.format(PWD, os.sep, test_data[0]['Name'])
+        print('test data location: {}'.format(self.pwd))
+
+    def test_backup(self):
+        set_test_mode(max_length_threshold=61)
+        recurse_dir(root_dir=self.pwd, delete_dirs_if_found_list=directories_to_delete_if_found)
+        self.assertEqual(2, len(warnings))
+
 
 # EOF
