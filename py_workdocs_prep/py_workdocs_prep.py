@@ -14,6 +14,7 @@ VALID_NAME_CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567
 FULL_LENGTH_WARNING_THRESHOLD = 244
 
 test_mode = False
+dry_run = False
 
 directories_to_delete_if_found = [
     '.git',
@@ -58,7 +59,7 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
             must_delete = True
         if re.search('^\\.', last_part) is not None or re.search('\\.$', last_part):
             must_delete = True
-        if must_delete is True:
+        if must_delete is True and dry_run is False:
             try:
                 shutil.rmtree(current_directory_name)
                 if test_mode:
@@ -66,6 +67,9 @@ def is_directory_to_be_deleted(current_directory_name: str, directories_to_delet
                 L.info(message='deleted directory "{}"'.format(current_directory_name))
             except:
                 L.warning(message='Error while deleting directory "{}"'.format(current_directory_name))
+            return True
+        elif must_delete is True and dry_run is True:
+            L.info(message='deleted directory "{}"'.format(current_directory_name))
             return True
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
@@ -82,7 +86,7 @@ def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->boo
             must_delete = True
         if re.search('^\\.', file_name) is not None or re.search('\\.$', file_name):
             must_delete = True
-        if must_delete is True:
+        if must_delete is True and dry_run is False:
             try:
                 os.unlink(current_file_with_full_path)
                 if test_mode:
@@ -90,6 +94,9 @@ def is_file_starting_or_ending_with_tilde(current_file_with_full_path: str)->boo
                 L.info(message='deleted file "{}"'.format(current_file_with_full_path))
             except:
                 L.warning(message='Error while deleting file "{}"'.format(current_file_with_full_path))
+            return True
+        elif must_delete is True and dry_run is True:
+            L.info(message='deleted file "{}"'.format(current_file_with_full_path))
             return True
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
@@ -111,7 +118,7 @@ def file_rename(current_file_with_full_path: str)->str:
             else:
                 final_file_name = '{}{}'.format(final_file_name, char)
         target_file = '{}{}{}'.format(path_name, os.sep, final_file_name)
-        if file_name != final_file_name:
+        if file_name != final_file_name and dry_run is False:
             pattern = re.compile('__*')
             final_file_name = pattern.sub('_', final_file_name)
             target_file = '{}{}{}'.format(path_name, os.sep, final_file_name)
@@ -127,6 +134,8 @@ def file_rename(current_file_with_full_path: str)->str:
                 L.info(message='renamed file "{}" to "{}"'.format(current_file_with_full_path, target_file))
             except:
                 L.warning(message='Error while moving file "{}"'.format(current_file_with_full_path))
+        elif file_name != final_file_name and dry_run is True:
+            L.info(message='renamed file "{}" to "{}"'.format(current_file_with_full_path, target_file))
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         target_file = current_file_with_full_path
@@ -149,7 +158,7 @@ def directory_rename(current_directory_name: str)->str:
             else:
                 final_dir_name = '{}{}'.format(final_dir_name, char)
         target_dir = '{}{}{}'.format(path_name, os.sep, final_dir_name)
-        if dir_name != final_dir_name:
+        if dir_name != final_dir_name and dry_run is False:
             pattern = re.compile('__*')
             final_dir_name = pattern.sub('_', final_dir_name)
             target_dir = '{}{}{}'.format(path_name, os.sep, final_dir_name)
@@ -165,6 +174,8 @@ def directory_rename(current_directory_name: str)->str:
                 L.info(message='renamed directory "{}" to "{}"'.format(current_directory_name, target_dir))
             except:
                 L.warning(message='Error while moving directory "{}"'.format(current_directory_name))
+        elif dir_name != final_dir_name and dry_run is True:
+            L.info(message='renamed directory "{}" to "{}"'.format(current_directory_name, target_dir))
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         target_dir = current_directory_name
@@ -228,16 +239,20 @@ def backup_files(root_dir: str)->str:
             os.sep,
             int(datetime.utcnow().timestamp())
         )
-        print('Backing up to archive "{}"'.format(backup_file))
-        tar = tarfile.open(backup_file, 'w')
-        archive_recurse_dir(directory=root_dir, tar_handler=tar)
-        tar.close()
-        backup_file_gz = '{}.gz'.format(backup_file)
-        with open(backup_file, 'rb') as f_in:
-            with gzip.open(backup_file_gz, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        os.unlink(backup_file)
-        print('Backup complete')
+        if dry_run is False:
+            L.info(message='Backing up to archive "{}"'.format(backup_file))
+            tar = tarfile.open(backup_file, 'w')
+            archive_recurse_dir(directory=root_dir, tar_handler=tar)
+            tar.close()
+            backup_file_gz = '{}.gz'.format(backup_file)
+            with open(backup_file, 'rb') as f_in:
+                with gzip.open(backup_file_gz, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            os.unlink(backup_file)
+            L.info(message='Backup complete')
+        else:
+            L.info(message='Backing up to archive "{}"'.format(backup_file))
+            L.info(message='Backup complete')
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
         backup_file_gz = ''
@@ -245,6 +260,7 @@ def backup_files(root_dir: str)->str:
 
 
 def parse_command_line_args(root_dir: str):
+    global dry_run
     try:
         parser = argparse.ArgumentParser(description='Prepare a directory for migration to AWS WorkDocs')
         parser.add_argument(
@@ -252,9 +268,17 @@ def parse_command_line_args(root_dir: str):
             action='store_true',
             help='Backup the files in the selected directory first. Files will be added to a tar archive and which will then be gzipped'
         )
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='Do not perform any actions, but just simulate. All actions will be logged.'
+        )
         args = parser.parse_args()
         if args.backup is True:
             backup_files(root_dir=root_dir)
+        if args.dry_run is True:
+            dry_run = True
+            L.dry_run = True
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
 
