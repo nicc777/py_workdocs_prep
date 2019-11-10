@@ -50,31 +50,32 @@ def set_test_mode(max_length_threshold: int=244):
     FULL_LENGTH_WARNING_THRESHOLD = max_length_threshold
 
 
-def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
+def is_directory_to_be_deleted(current_directory_name: str, target_directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
     last_part = current_directory_name.split(os.sep)[-1]
     must_delete = False
-    try:
-        for term in directories_to_delete_if_found:
-            if re.search(term, current_directory_name, re.IGNORECASE) is not None:
+    if len(target_directories_to_delete_if_found) > 0:
+        try:
+            for term in target_directories_to_delete_if_found:
+                if re.search(term, current_directory_name, re.IGNORECASE) is not None:
+                    must_delete = True
+            if re.search('.tmp$', current_directory_name):
                 must_delete = True
-        if re.search('.tmp$', current_directory_name):
-            must_delete = True
-        if re.search('^\\.', last_part) is not None or re.search('\\.$', last_part):
-            must_delete = True
-        if must_delete is True and dry_run is False:
-            try:
-                shutil.rmtree(current_directory_name)
-                if test_mode:
-                    data['processing']['directories_deleted'].append(current_directory_name)
+            if re.search('^\\.', last_part) is not None or re.search('\\.$', last_part):
+                must_delete = True
+            if must_delete is True and dry_run is False:
+                try:
+                    shutil.rmtree(current_directory_name)
+                    if test_mode:
+                        data['processing']['directories_deleted'].append(current_directory_name)
+                    L.info(message='deleted directory "{}"'.format(current_directory_name))
+                except:
+                    L.warning(message='Error while deleting directory "{}"'.format(current_directory_name))
+                return True
+            elif must_delete is True and dry_run is True:
                 L.info(message='deleted directory "{}"'.format(current_directory_name))
-            except:
-                L.warning(message='Error while deleting directory "{}"'.format(current_directory_name))
-            return True
-        elif must_delete is True and dry_run is True:
-            L.info(message='deleted directory "{}"'.format(current_directory_name))
-            return True
-    except:
-        L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
+                return True
+        except:
+            L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
     return False
 
 
@@ -184,7 +185,7 @@ def directory_rename(current_directory_name: str)->str:
     return target_dir
 
 
-def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_to_delete_if_found):
+def recurse_dir(root_dir: str, delete_dirs_if_found_list: list=directories_to_delete_if_found):
     '''
     Note: Initial pattern from https://www.devdungeon.com/content/walk-directory-python was adopted in the final product.
     '''
@@ -196,12 +197,12 @@ def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_
                 L.warning(message='ignoring based on configuration: "{}"'.format(item_full_path))
             else:
                 if os.path.isdir(item_full_path):
-                    if is_directory_to_be_deleted(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found) is False:
+                    if is_directory_to_be_deleted(item_full_path, target_directories_to_delete_if_found=delete_dirs_if_found_list) is False:
                         item_full_path = directory_rename(current_directory_name=item_full_path)
                         if test_mode:
                             data['all_original_dirs_only'].append(item_full_path)
                         L.info(message='original directory: "{}" '.format(item_full_path))
-                        recurse_dir(item_full_path, directories_to_delete_if_found=directories_to_delete_if_found)
+                        recurse_dir(item_full_path, delete_dirs_if_found_list=delete_dirs_if_found_list)
                 else:
                     keep_file = 0
                     if is_file_starting_or_ending_with_tilde(current_file_with_full_path=item_full_path) is False:
@@ -270,6 +271,7 @@ def backup_files(root_dir: str)->str:
 
 def parse_command_line_args(root_dir: str):
     global dry_run
+    global directories_to_delete_if_found
     try:
         parser = argparse.ArgumentParser(description='Prepare a directory for migration to AWS WorkDocs')
         parser.add_argument(
@@ -282,12 +284,23 @@ def parse_command_line_args(root_dir: str):
             action='store_true',
             help='Do not perform any actions, but just simulate. All actions will be logged.'
         )
+        parser.add_argument(
+            '--delete-dirs',
+            action='store',
+            help='A comma separated list of directory names to mark for deletion. Default: {}'.format(directories_to_delete_if_found),
+            default=".git,venv*,node_modules"
+        )
         args = parser.parse_args()
         if args.backup is True:
             backup_files(root_dir=root_dir)
         if args.dry_run is True:
             dry_run = True
             L.dry_run = True
+        if len(args.delete_dirs) > 0:
+            directories_to_delete_if_found = args.delete_dirs.split(',')
+        else:
+            directories_to_delete_if_found = list()
+        L.info(message='List of directories to be deleted is set to: {}'.format(directories_to_delete_if_found))
     except:
         L.error(message='EXCEPTION: {}'.format(traceback.format_exc()))
 
@@ -295,7 +308,7 @@ def parse_command_line_args(root_dir: str):
 def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
     parse_command_line_args(root_dir=start)
-    recurse_dir(root_dir=start)
+    recurse_dir(root_dir=start, delete_dirs_if_found_list=directories_to_delete_if_found)
     if len(warnings) > 0:
         print('Some full path lengths were found to exceed the maximum length threshold. Please search the log file for the phrase "TOTAL LENGTH EXCEEDED THRESHOLD" to identify these files. You must strongly consider re-organising your directory and file structure before attempting to move these files to AWS WorkDocs.')
         print('Number of files that exceeded the maximum length threshold: {}'.format(len(warnings)))
