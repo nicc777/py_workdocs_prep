@@ -296,7 +296,7 @@ class TestBasicWalkDir(unittest.TestCase):
 
     def test_recurse_dir(self):
         set_test_mode()
-        recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
+        recurse_dir(root_dir=self.pwd, delete_dirs_if_found_list=directories_to_delete_if_found)
         self.assertEqual(5, len(data['all_original_dirs_only']))
         self.assertEqual(14, len(data['all_original_files']))
         self.assertEqual(3, len(data['processing']['directories_deleted']))
@@ -372,7 +372,7 @@ class TestMaximumLengthValidationAndWarning(unittest.TestCase):
 
     def test_backup(self):
         set_test_mode(max_length_threshold=61)
-        recurse_dir(root_dir=self.pwd, directories_to_delete_if_found=directories_to_delete_if_found)
+        recurse_dir(root_dir=self.pwd, delete_dirs_if_found_list=directories_to_delete_if_found)
         self.assertEqual(2, len(warnings))
 
 
