@@ -41,11 +41,13 @@ data['processing']['renamed_files'] = list()
 data['processing']['renamed_directories'] = list()
 
 
-def set_test_mode():
+def set_test_mode(max_length_threshold: int=244):
     '''Only used for unit testing
     '''
     global test_mode
+    global FULL_LENGTH_WARNING_THRESHOLD
     test_mode = True
+    FULL_LENGTH_WARNING_THRESHOLD = max_length_threshold
 
 
 def is_directory_to_be_deleted(current_directory_name: str, directories_to_delete_if_found: list=directories_to_delete_if_found)->bool:
@@ -208,7 +210,14 @@ def recurse_dir(root_dir: str, directories_to_delete_if_found: list=directories_
                         final_file_name_and_full_path = file_rename(current_file_with_full_path=item_full_path)
                         if test_mode:
                             data['all_original_files'].append(final_file_name_and_full_path)
-                        L.info(message='original file: "{}" '.format(final_file_name_and_full_path))
+                        if len(final_file_name_and_full_path) > FULL_LENGTH_WARNING_THRESHOLD:
+                            L.warning(message='TOTAL LENGTH EXCEEDED THRESHOLD  - file path "{}" is {} characters long (threshold={})'.format(
+                                final_file_name_and_full_path,
+                                len(final_file_name_and_full_path),
+                                FULL_LENGTH_WARNING_THRESHOLD
+                            ))
+                            warnings.append(final_file_name_and_full_path)
+                        L.info(message='original file: "{}"   [length={}]'.format(final_file_name_and_full_path, len(final_file_name_and_full_path)))
                     else:
                         L.warning(message='File "{}" was marked to be deleted'.format(item_full_path))
     except:
@@ -287,6 +296,9 @@ def start(start=os.getcwd()):
     print('Starting in "{}"'.format(start))
     parse_command_line_args(root_dir=start)
     recurse_dir(root_dir=start)
+    if len(warnings) > 0:
+        print('Some full path lengths were found to exceed the maximum length threshold. Please search the log file for the phrase "TOTAL LENGTH EXCEEDED THRESHOLD" to identify these files. You must strongly consider re-organising your directory and file structure before attempting to move these files to AWS WorkDocs.')
+        print('Number of files that exceeded the maximum length threshold: {}'.format(len(warnings)))
 
 
 if __name__ == "__main__":
