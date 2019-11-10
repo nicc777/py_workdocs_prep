@@ -31,6 +31,40 @@ Here is the most important limitations as of 2019-10-26:
 
 The following examples assume a MS Windows system, as the intend is to prepare a directory for AWS WorkDocs, which typically only has clients for Windows (unless you are on mobile).
 
+### From PyPi
+
+Prerequisites:
+
+* Python 3.7+
+
+The example below will show how to get started very quickly using the most current version. The example will demonstrate a dry-run operation that will allow you to inspect the log file and review changes before committing.
+
+Assuming you are on the Windows command line:
+
+```shell
+> pip install py-workdocs-prep
+> cd <the directory you whish to prepare for migration>
+> wdp --dry-run
+```
+
+A log file called `py_workdocs_prep.log` will be generated. If it already exist, new entries will be appended.
+
+**NOTE** It is highly recommended that you inspect the log file and understand how the application will change your files - and delete certain directories and files. Also take special note of any warnings, especially those about the total path length that may be too long (search for the string `TOTAL LENGTH EXCEEDED THRESHOLD`). [Read here](https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN#maximum-path-length-limitation) why this is important.
+
+To commit all changes, but first backup all files and directories, you can run the following (assuming the application is already installed):
+
+```shell
+> wdp -b
+```
+
+#### Command Line Arguments
+
+| Option             | Description                                                                                                                           | Example           |
+|--------------------|---------------------------------------------------------------------------------------------------------------------------------------|-------------------|
+| `-b` or `--backup` | Create a backup of all current files and directories. A `tar.gz` file will be created.                                                | `> wdp -b`        |
+| `--dry-run`        | The application will not perform any file or directory modifications, but only log what would be done.                                | `> wdp --dry-run` |
+| `--delete-dirs`    | Define a comma separated list of directories to be deleted. Don't include any spaces, but rather use proper Python regex expressions. | `> wdp --delete-dirs="test1,ven*,node_mod*"`
+
 ### From Source
 
 Prerequisites:
